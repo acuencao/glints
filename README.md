@@ -1,4 +1,4 @@
-# glints
+# GLINTS
 Glints is a graphical tool for exploring (variant) narrowing computations in Maude.
 Glints supports: 1) exploring variant narrowing trees, 2) checking the 
 "finite variant property" (FVP) in equational theories, 3) checking equational 
