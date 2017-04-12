@@ -12,7 +12,7 @@ Glints is a joint work developed by María Alpuente, Angel Cuenca-Ortega, Santia
 An online version of Glints is available at: http://safe-tools.dsic.upv.es/glints/
 
 ----------------------------------------------------------------------------------------------------------------------
-FVP CHECKER    
+FVP Checker
 ----------------------------------------------------------------------------------------------------------------------
 FVP checker is part of the GLINTS project and allows to check FVP property in 
 equational theories. 
