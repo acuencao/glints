@@ -14,7 +14,7 @@ An online version of Glints is available at: http://safe-tools.dsic.upv.es/glint
 ----------------------------------------------------------------------------------------------------------------------
 FVP CHECKER    
 ----------------------------------------------------------------------------------------------------------------------
-FVP checker is part of GLINTS project and allows to check FVP property in 
+FVP checker is part of the GLINTS project and allows to check FVP property in 
 equational theories. 
 
 FVP-checker requires Maude or Mau-Dev (which is a developer extension of Maude 
