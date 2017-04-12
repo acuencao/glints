@@ -1,0 +1,123 @@
+--------------------------------------------------------------------------------
+---        This file is part of the Glints Project (safe-tools.dsic.upv.es/glints)
+--------------------------------------------------------------------------------
+---                       GLINTS - FVP checker
+---                   Copyright 2017 by ELP Group
+    
+---      Universitat Politècnica de València, Valencia, Spain. (www.upv.es)
+---         Universidad de Guayaquil, Guayaquil, Ecuador. (www.ug.edu.ec)       
+--------------------------------------------------------------------------------
+fmod GLINTS-GENERAL is
+	pr CONVERSION .	
+	pr META-LEVEL .	
+	
+	var Q : Qid . var N N' : Nat .
+	var AT : Attr . var ATS : AttrSet . 
+	var TYL : TypeList . var TY : Type . 
+	var OD : OpDecl . var ODS : OpDeclSet .
+	
+	op _++ : Nat -> Nat .	
+	eq N ++ = s(N) . 
+		
+	---Create a set of vars of the form X1:T1, X2:T2, ..., Xn:Tn,
+	---N is the size of the TypeList.
+	---TY/TYL are types.	
+	op newVar : Nat TypeList -> TermList .
+	eq newVar(N, nil) = empty .
+	eq newVar(N, TY TYL) = (newVar*(N, TY), newVar(s(N), TYL)) .
+	
+	op newVar* : Nat Type -> Variable .
+	eq newVar*(N, TY) = qid("X" + string(N, 10) + ":" + string(TY)) .		
+	 
+	---create a TypeList (without vars) to TermList (vars with types)
+	op fromTypeList2Term : TypeList Nat -> TermList [memo] .
+	eq fromTypeList2Term(TY TYL, N) = newVar(N, TY), fromTypeList2Term(TYL, (N)++) . 
+	eq fromTypeList2Term(TY nil, N) = newVar(N, TY) [owise] . 
+	eq fromTypeList2Term(nil, N) = empty [owise] .		 
+	 
+	---create a TermList from OpDeclSet
+	---e.g.: from op _+_ : S1 S2 -> S3 . to X0 + X1 . 
+	op fromOpDeclSet2TermList : OpDeclSet -> TermList .
+	eq fromOpDeclSet2TermList(op Q : nil -> TY [ATS] . ODS) = qid(string(Q) + "." + string(TY)), fromOpDeclSet2TermList(ODS) .
+	eq fromOpDeclSet2TermList(op Q : TYL -> TY [ATS] . ODS) = Q [fromTypeList2Term(TYL, 0)], fromOpDeclSet2TermList(ODS) .
+	eq fromOpDeclSet2TermList(none) = empty [owise] .
+endfm
+
+fmod GLINTS-FVP-FUNCTIONS is
+	pr GLINTS-GENERAL .	
+	---pr BOOL .
+	
+	var OD OD' : OpDecl . var ODS : OpDeclSet .
+	var N N' N'' : Nat . var FRS FRS' : FvpResultSet .
+	var M : Module . var T : Term .
+	
+	---para los FVP
+	sorts FvpResult FvpResultSet . subsort FvpResult < FvpResultSet .
+	op noFvpResult : -> FvpResultSet .
+	op [noFvpResult] : -> [FvpResultSet] .
+	---<Operator | Total of variants computed | Status of result: True/Unknwon>
+	op <_|_|_> : OpDecl Nat TrueUnknown -> FvpResult [ctor format(n d d d d d d d)] .  
+	op __ : FvpResultSet FvpResultSet -> FvpResultSet [assoc comm id: noFvpResult] .	
+	
+	sort TrueUnknown . ---sort for the result of the test FVP
+	op True : -> TrueUnknown .
+	op Unknown : -> TrueUnknown .
+
+	op fvpOpDeclSet : Module OpDeclSet Nat FvpResultSet -> FvpResultSet .
+	eq fvpOpDeclSet(M, none, N, FRS) = FRS .
+	eq fvpOpDeclSet(M, OD ODS, N, FRS) = fvpOpDeclSet(M, ODS, N, 
+											FRS fvpOpDecl(M, OD, fromOpDeclSet2TermList(OD), noFvpResult, 0, N)) .
+	
+	var FR-K : [FvpResult] . var FR : FvpResult .
+	
+	op fvpOpDecl : Module OpDecl Term FvpResult Nat Nat -> FvpResult .
+	eq fvpOpDecl(M, OD, T, [noFvpResult], N, N) = < OD | N | Unknown > . ---stop condition - Kind
+	eq fvpOpDecl(M, OD, T, noFvpResult, N, N) = < OD | N | Unknown > . ---stop condition - Kind
+	eq fvpOpDecl(M, OD, T, [noFvpResult], N, N') = < OD | N | Unknown > [owise] . 	
+	eq fvpOpDecl(M, OD, T, noFvpResult, N, N') = ---when there is more variants
+				fvpOpDecl(M, OD, T, 
+					   verifyVariant(metaGetVariant(M, T, empty, 0, N), OD, N), 
+					   (N) ++, N') [owise] .	
+	eq fvpOpDecl(M, OD, T, < OD' | N'' | True >, N, N') = < OD' | N'' | True > [owise] .  ---when it is the last variant				   
+
+	var VT : Variant? . var VT-K : [Variant?] .		
+	
+	op verifyVariant : Variant? OpDecl Nat -> FvpResult .
+	eq verifyVariant(noVariant, OD, N) = < OD | N | True > .
+	eq verifyVariant(VT, OD, N) = noFvpResult [owise] .
+	eq verifyVariant(VT-K, OD, N) = [noFvpResult] [owise] .
+	
+	op verifyFvpResult : FvpResultSet -> TrueUnknown .
+	eq verifyFvpResult(FRS < OD | N | Unknown > FRS') = Unknown .
+	eq verifyFvpResult(FRS) = True [owise] .
+endfm	
+
+fmod GLINTS-FVP-CHECKER is
+	pr GLINTS-FVP-FUNCTIONS .	
+	
+	var OD : OpDecl . 
+	var N : Nat . 
+	var M : Module . 
+	
+	---checking the FVP property in equational theories for an operator	
+	---Parameters: 	FModule
+	---				Operator to check the FVP property
+	---				Nat -> Total of variants	
+	op fvpOpDecl : Module OpDecl Nat -> FvpResultSet .
+	---eq fvpOpDecl(M, OD, N) = verifyFvpResult(fvpOpDecl(M, OD, fromOpDeclSet2TermList(OD), noFvpResult, 0, N)) .
+	eq fvpOpDecl(M, OD, N) = fvpOpDecl(M, OD, fromOpDeclSet2TermList(OD), noFvpResult, 0, N) .
+	
+	---checking the FVP property in equational theories for each operator, and	
+	---return a FvpResultSet 
+	---Parameters: 	FModule
+	---			   	Nat -> Total of variants	
+	op fvpOpDeclSet : Module Nat ->  FvpResultSet .
+ 	eq fvpOpDeclSet(M, N) = fvpOpDeclSet(M, getOps(M), N, noFvpResult) .
+	
+	---checking the FVP property in equational theories	for all module, and
+	---return Bool (true or unknown)
+	---Parameters: 	FModule
+	---			   	Nat -> Total of variants		
+	op fvpModule : Module Nat -> TrueUnknown .
+	eq fvpModule(M, N) = verifyFvpResult(fvpOpDeclSet(M, getOps(M), N, noFvpResult)) .
+endfm
