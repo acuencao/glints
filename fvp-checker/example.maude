@@ -1,0 +1,92 @@
+--------------------------------------------------------------------------------
+---        This file is part of the Glints Project (safe-tools.dsic.upv.es/glints)
+--------------------------------------------------------------------------------
+---		Example to run on Maude (http://maude.cs.illinois.edu/) or
+---		Mau-Dev (safe-tools.dsic.upv.es/maudev)
+--------------------------------------------------------------------------------
+---                       GLINTS - FVP checker
+---                   Copyright 2017 by ELP Group
+    
+---      Universitat Politècnica de València, Valencia, Spain. (www.upv.es)
+---         Universidad de Guayaquil, Guayaquil, Ecuador. (www.ug.edu.ec)  
+--------------------------------------------------------------------------------
+
+load fvp.maude
+
+--------------------------------------------------------------------------------
+---                           EXAMPLE 1                                      ---
+--------------------------------------------------------------------------------
+
+---This module satisfies the finite variant property (FVP), therefore all operators 
+---have a finite numbers of variants and the result is 'True'
+fmod EXCLUSIVE-OR is
+   sorts Nat NatSet .
+   op 0 : -> Nat .
+   op s : Nat -> Nat .
+ 
+   subsort Nat < NatSet .
+   op mt : -> NatSet .
+   op _*_ : NatSet NatSet -> NatSet [assoc comm] .
+
+   vars X Y Z : [NatSet] .
+   eq [idem] :     X * X = mt    [variant] .
+   eq [idem-Coh] : X * X * Z = Z [variant] .
+   eq [id] :       X * mt = X    [variant] .
+endfm
+			
+---Checks if a given operator has a finite number of variants
+---Parameters: 	FModule
+---				Operator to check the finite variant property
+---				Nat -> Maximum number of variants to compute	
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR, true), op '0 : nil -> 'Nat [none] ., 2) .
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR, true), op '_*_ : 'NatSet 'NatSet -> 'NatSet [assoc comm] ., 10) .
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR, true), op 'mt : nil -> 'NatSet [none] ., 2) .
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR, true), op 's : 'Nat -> 'Nat [none] ., 2) .
+
+---Checks if the set of operators of the module have a finite number of variants and returns a detailled result (FvpResultSet)
+---of the form 	---<Operator | Total of variants computed | Status of result: True/Unknwon>
+---Parameters: 	FModule
+---				Nat -> Maximum number of variants to compute								
+red in GLINTS-FVP-CHECKER : fvpOpDeclSet(upModule('EXCLUSIVE-OR, false),	30) .
+
+---Checks if the set of operators of the module have a finite number of variants and returns "True", otherwise "Unknown", 
+---Parameters: 	FModule
+---				Nat -> Maximum number of variants to compute								
+red in GLINTS-FVP-CHECKER : fvpModule(upModule('EXCLUSIVE-OR, false),	30) .	
+
+---Note that in this case the value of the second parameter of "upModule" is "false"; 
+---this restricts Maude to perform the FVP test with the "EXCLUSIVE-OR" operators.
+
+--------------------------------------------------------------------------------
+---                           EXAMPLE 2                                      ---
+--------------------------------------------------------------------------------
+
+---This module does not satisfy the property FVP because  
+---the number of variants for the operator _*_ is not finite, therefore 
+---its state will be 'unknown'
+fmod EXCLUSIVE-OR-NOFVP is
+   sorts Nat NatSet .
+   subsort Nat < NatSet .
+
+   op 0 : -> Nat .
+   op s : Nat -> Nat .
+   op mt : -> NatSet .
+   op _*_ : NatSet NatSet -> NatSet [assoc comm] .
+
+   var X : Nat .
+   var Z : [NatSet] .
+
+   eq [idem] :     X * X = mt    [variant] .
+   eq [idem-Coh] : X * X * Z = Z [variant] .
+   eq [id] :       X * mt = X    [variant] .
+endfm
+
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR-NOFVP, true), op '0 : nil -> 'Nat [none] ., 2) .
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR-NOFVP, true), op '_*_ : 'NatSet 'NatSet -> 'NatSet [assoc comm] ., 5) .
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR-NOFVP, true), op 'mt : nil -> 'NatSet [none] ., 2) .
+red in GLINTS-FVP-CHECKER : fvpOpDecl(upModule('EXCLUSIVE-OR-NOFVP, true), op 's : 'Nat -> 'Nat [none] ., 2) .							
+
+red in GLINTS-FVP-CHECKER : fvpOpDeclSet(upModule('EXCLUSIVE-OR-NOFVP, true),	30) .
+
+red in GLINTS-FVP-CHECKER : fvpModule(upModule('EXCLUSIVE-OR-NOFVP, true),	30) .	
+	
