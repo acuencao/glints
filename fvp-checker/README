@@ -1,0 +1,53 @@
+--------------------------------------------------------------------------------
+        This file is part of the Glints Project (safe-tools.dsic.upv.es/glints)
+--------------------------------------------------------------------------------
+                       GLINTS - FVP checker
+                   Copyright 2017 by ELP Group
+    
+      Universitat Politècnica de València, Valencia, Spain. (www.upv.es)
+         Universidad de Guayaquil, Guayaquil, Ecuador. (www.ug.edu.ec)       
+--------------------------------------------------------------------------------
+Glints is a graphical tool for exploring (variant) narrowing computations in Maude.
+Glints supports: 1) exploring variant narrowing trees, 2) checking the 
+"finite variant property" (FVP) in equational theories, 3) checking equational 
+embedding and closedness of variant narrowing trees modulo axioms, and 4) debugging 
+Maude programs by querying and inspecting selected parts of the variant computations.
+
+FVP checker is part of GLINTS project and allows to check FVP property in 
+equational theories. 
+--------------------------------------------------------------------------------
+                      How to run FVP checker
+--------------------------------------------------------------------------------
+FVP-checker requires Maude or Mau-Dev (which is a developer extension of Maude 
+available at http://safe-tools.dsic.upv.es/maudev) to run.
+
+FVP checker is available at GLINTS website (safe-tools.dsic.upv.es/glints). 
+Nevertheless, the core of FVP checker can be executed in a localhost terminal 
+console too.
+
+A example file is provided within the "example.maude" file. 
+
+A typical execution of this example would be the following:
+
+Linux:
+./maude.linux64 example.maude (Maude)
+./maudev.linux64 example.maude (Mau-Dev)
+
+MacOS:
+./maude.darwin64 example.maude (Maude)
+./maudev.darwin64 example.maude (Mau-Dev)
+
+Windows:
+maude.exe example.maude (Maude)
+maudev.exe example.maude (Mau-Dev)
+
+The outputs  can be: 
+1. A set of triple terms (FvpResultSet) of the form:
+	    < OpDecl | Nat | TrueUnknown >
+	where:
+	- OpDecl is any operator of the module, 
+	- Nat is the total of variant generated for any operator,and 
+	- TrueUnknown corresponds to result of test, which can be either
+	      True (whether the operator satisfy the FVP test) or 
+  	      Unknown (whether the operator does not satisfy the FVP test).
+ 2. A TrueUnknown value ('True' or 'Unknown')  	   
